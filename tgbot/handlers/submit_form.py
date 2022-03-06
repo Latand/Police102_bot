@@ -11,24 +11,20 @@ from tgbot.infrastructure.google_sheets import ExcelForm, write_to_sheet
 from tgbot.infrastructure.telegraph.abstract import FileUploader
 from tgbot.misc.functions import location_url_gmaps
 from tgbot.misc.states import Form
+import tgbot.misc.texts
 
 
 async def accept_phone_contact(message: types.Message, state: FSMContext):
     if message.contact.user_id != message.from_user.id:
-        await message.reply('Вам необхідно надіслати ваш контакт, а не чужий.')
+        await message.reply(tgbot.misc.texts.WRONG_CONTACT_MESSAGE)
         return
     phone_number = message.contact.phone_number
     full_name = f'{message.contact.first_name} {message.contact.last_name}'
     await state.update_data(phone_number=phone_number)
 
     await message.reply(
-        f'Номер {hcode(phone_number)} зареєстровано.\n\n'
-        'Тепер введіть ПІБ Заявника, або скористайтесь кнопками, щоб надіслати один із запропонованих варіантів'
-        '\n\n'
-        'Приклад ' + hcode('Телеграмченко Анастасія Сергіївна') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.'
-        ,
+        tgbot.misc.texts.PHONE_REGISTERED.format(phone_number=hcode(phone_number)) +
+        tgbot.misc.texts.FULL_NAME_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
@@ -48,12 +44,8 @@ async def accept_phone_text(message: types.Message, state: FSMContext):
     await state.update_data(phone_number=phone_number)
 
     await message.reply(
-        f'Номер {hcode(phone_number)} зареєстровано.\n\n'
-        'Тепер введіть ПІБ Заявника, або скористайтесь кнопками, щоб надіслати запропонований варіант.'
-        '\n\n'
-        'Приклад ' + hcode('Телеграмченко Анастасія Сергіївна') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.',
+        tgbot.misc.texts.PHONE_REGISTERED.format(phone_number=hcode(phone_number)) +
+        tgbot.misc.texts.FULL_NAME_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
@@ -68,15 +60,14 @@ async def accept_phone_text(message: types.Message, state: FSMContext):
 async def wrong_number(message: types.Message, state: FSMContext):
     phone_number = message.text
     await state.update_data(phone_number=phone_number)
-    await message.reply('Неправильно набраний номер, введіть правильний номер '
-                        'мобільного телефону або натисніть далі щоб продовжити з цим, або Скасувати',
+    await message.reply(tgbot.misc.texts.WRONG_NUMBER_MESSAGE,
                         reply_markup=ReplyKeyboardMarkup(
                             keyboard=[
                                 [
-                                    KeyboardButton('Далі')
+                                    KeyboardButton(tgbot.misc.texts.NEXT)
                                 ],
                                 [
-                                    KeyboardButton('Скасувати')
+                                    KeyboardButton(tgbot.misc.texts.CANCEL)
                                 ],
                             ],
                             resize_keyboard=True,
@@ -84,7 +75,7 @@ async def wrong_number(message: types.Message, state: FSMContext):
 
 
 async def cancel(message: types.Message, state: FSMContext):
-    await message.reply('Скасовано', reply_markup=ReplyKeyboardRemove())
+    await message.reply(tgbot.misc.texts.CANCELLED, reply_markup=ReplyKeyboardRemove())
     await state.finish()
 
 
@@ -93,12 +84,8 @@ async def process_wrong_phone(message: types.Message, state: FSMContext):
     phone_number = data.get('phone_number')
 
     await message.reply(
-        f'Номер {hcode(phone_number)} зареєстровано.\n\n'
-        'Тепер введіть ПІБ Заявника, або скористайтесь кнопками, щоб надіслати запропонований варіант.'
-        '\n\n'
-        'Приклад ' + hcode('Телеграмченко Анастасія Сергіївна') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.',
+        tgbot.misc.texts.PHONE_REGISTERED.format(phone_number=hcode(phone_number)) +
+        tgbot.misc.texts.FULL_NAME_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
@@ -115,12 +102,8 @@ async def process_full_name(message: types.Message, state: FSMContext):
     await state.update_data(full_name=full_name)
 
     await message.reply(
-        f'ПІБ: {hcode(full_name)} зареєстровано.\n\n'
-        'Тепер введіть ' + hbold('Адресу пригоди (події)') +
-        '\n\n'
-        'Приклад ' + hcode('Район, Населений пункт, Вулиця, Будинок, Квартира') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.',
+        tgbot.misc.texts.FULL_NAME_REGISTERED.format(full_name=hcode(full_name)) +
+        tgbot.misc.texts.ADDRESS_INSTRUCTION,
         reply_markup=ReplyKeyboardRemove()
     )
     await Form.Address.set()
@@ -131,14 +114,12 @@ async def process_address(message: types.Message, state: FSMContext):
     await state.update_data(address=address)
 
     await message.reply(
-        f'Адресу: {hcode(address)} зареєстровано.\n\n'
-        'Тепер надішліть ' + hbold('геолокацію для уточнення адреси') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.',
+        tgbot.misc.texts.ADDRESS_REGISTERED.format(address=hcode(address)) +
+        tgbot.misc.texts.GEOLOCATION_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
-                [KeyboardButton('🌎 Надіслати геолокацію', request_location=True)],
-                [KeyboardButton('❌ Пропустити')],
+                [KeyboardButton(tgbot.misc.texts.SEND_LOCATION, request_location=True)],
+                [KeyboardButton(tgbot.misc.texts.SKIP)],
             ], resize_keyboard=True
         )
     )
@@ -146,30 +127,19 @@ async def process_address(message: types.Message, state: FSMContext):
 
 
 async def no_geolocation(message: types.Message):
-    await message.reply('Ви надіслали не геолокацію. Будь ласка натисніть кнопку нижче, щоб надіслати геолокацію')
+    await message.reply(tgbot.misc.texts.INVALID_LOCATION_MESSAGE)
 
 
 async def skip_geolocation(message: types.Message, state: FSMContext):
     await state.update_data(geolocation='-')
 
-    reasons = [
-        "Злочин проти життя та здоров'я",
-        "Злочин проти власності/майна",
-        "Раптова смерть",
-        "Викрадення авто",
-        "ДТП з травмованими",
-        "Інша подія",
-    ]
-
     await message.reply(
-        'Геолокацію не надіслано.' +
-        '\n\n'
-        'Тепер виберіть ' + hbold('короткий опис події, що сталася') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.',
+        tgbot.misc.texts.NO_LOCATION_MESSAGE +
+        '\n\n' +
+        tgbot.misc.texts.DESCRIPTION_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
-                [KeyboardButton(text)] for text in reasons
+                [KeyboardButton(text)] for text in tgbot.misc.texts.HELP_REASONS
             ]
         )
     )
@@ -183,24 +153,13 @@ async def process_geolocation(message: types.Message, state: FSMContext):
     geolocation = location_url_gmaps(latitude, longitude)
     await state.update_data(geolocation=geolocation)
 
-    reasons = [
-        "Злочин проти життя та здоров'я",
-        "Злочин проти власності/майна",
-        "Раптова смерть",
-        "Викрадення авто",
-        "ДТП з травмованими",
-        "Інша подія",
-    ]
-
     await message.reply(
-        hlink('Геолокацію зареєстровано.', geolocation) +
-        '\n\n'
-        'Тепер виберіть ' + hbold('короткий опис події, що сталася') +
-        '\n\n'
-        'Або натисніть /cancel щоб скасувати звернення.',
+        hlink(tgbot.misc.texts.LOCATION_REGISTERED, geolocation) +
+        '\n\n' +
+        tgbot.misc.texts.DESCRIPTION_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
-                [KeyboardButton(text)] for text in reasons
+                [KeyboardButton(text)] for text in tgbot.misc.texts.HELP_REASONS
             ]
         )
     )
@@ -212,8 +171,8 @@ async def process_description(message: types.Message, state: FSMContext):
     await state.update_data(description=description)
 
     await message.reply(
-        f'Опис події: {hcode(description)} зареєстровано.\n\n'
-        'Прикріпіть фото, або натисніть кнопку ' + hbold("Пропустити"),
+        tgbot.misc.texts.DESCRIPTION_REGISTERED.format(description=hcode(description)) +
+        tgbot.misc.texts.PHOTO_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[[
                 KeyboardButton('❌ Пропустити')
@@ -227,16 +186,16 @@ async def process_description(message: types.Message, state: FSMContext):
 async def process_no_photo_text(message: types.Message, state: FSMContext):
     await state.update_data(comment=message.text)
     await message.reply(
-        'Коментар/опис події був добавлен.'
-        '\n\n'
-        'Потребуєте швидкої медичної допомоги',
+        tgbot.misc.texts.DESCRIPTION_REGISTERED_2 +
+        '\n\n' +
+        tgbot.misc.texts.NEED_HELP_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton('✔ Потребує швидкої медичної допомоги'),
+                    KeyboardButton(tgbot.misc.texts.YES_HELP),
                 ],
                 [
-                    KeyboardButton('❌ Не потребує швидкої медичної допомоги'),
+                    KeyboardButton(tgbot.misc.texts.NO_HELP),
                 ]
             ],
             resize_keyboard=True
@@ -247,22 +206,23 @@ async def process_no_photo_text(message: types.Message, state: FSMContext):
 
 async def process_else_no_photo(message: types.Message, state: FSMContext):
     await state.update_data(comment=message.text, photo='-')
-    await message.reply('⚠️ Надішліть будь ласка фотографію, <u>не документ</u> або натисніть кнопку Пропустити')
+    await message.reply(tgbot.misc.texts.PHOTO_NO_DOCUMENT_ERROR)
 
 
 async def process_cancel_photo(message: types.Message, state: FSMContext):
     await state.update_data(photo='-')
 
     await message.reply(
-        f'Відправку фото пропущено.\n\n'
-        'Потребуєте швидкої медичної допомоги (пожежної або газової служби)',
+        tgbot.misc.texts.SKIPPED_PHOTO +
+        '\n\n' +
+        tgbot.misc.texts.NEED_HELP_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton('✔ Так'),
+                    KeyboardButton(tgbot.misc.texts.YES_HELP),
                 ],
                 [
-                    KeyboardButton('❌ Ні'),
+                    KeyboardButton(tgbot.misc.texts.NO_HELP),
                 ]
             ],
             resize_keyboard=True
@@ -278,15 +238,16 @@ async def process_photo(message: types.Message, state: FSMContext, file_uploader
     await state.update_data(photo=uploaded_photo.link)
 
     await message.reply(
-        f'Фото зареєстровано.\n\n'
-        'Потребуєте швидкої медичної допомоги (пожежної або газової служби)',
+        tgbot.misc.texts.PHOTO_REGISTERED +
+        '\n\n' +
+        tgbot.misc.texts.NEED_HELP_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton('✔ Так'),
+                    KeyboardButton(tgbot.misc.texts.YES_HELP),
                 ],
                 [
-                    KeyboardButton('❌ Ні'),
+                    KeyboardButton(tgbot.misc.texts.NO_HELP),
                 ]
             ],
             resize_keyboard=True
@@ -302,18 +263,18 @@ async def process_urgent_status(message: types.Message, state: FSMContext, googl
     comment = data.get('comment')
     buttons = [
         [
-            KeyboardButton('❌ Пропустити')
+            KeyboardButton(tgbot.misc.texts.SKIP)
         ]
     ]
-    text = 'Бажаєте добавити коментар/опис події? Введіть в наступному повідомленні або натисніть Пропустити.\n\n'
+    text = tgbot.misc.texts.ADD_COMMENT_MORE
 
     if comment:
         buttons.append(
             [
-                KeyboardButton('✅ Зберегти')
+                KeyboardButton(tgbot.misc.texts.SAVE)
             ]
         )
-        text += f'Ваш коментар: {hbold(comment)}. '
+        text += tgbot.misc.texts.ADDED_COMMENT.format(comment=hbold(comment))
 
     await message.reply(
         text,
@@ -326,12 +287,12 @@ async def process_urgent_status(message: types.Message, state: FSMContext, googl
 
 
 async def process_comment(message: types.Message, state: FSMContext, google_client, config):
-    await message.reply('Реєструю ...', reply_markup=ReplyKeyboardRemove())
+    await message.reply(tgbot.misc.texts.IS_BEING_REGISTERED, reply_markup=ReplyKeyboardRemove())
     data = await state.get_data()
 
-    if message.text == '✅ Зберегти':
+    if message.text == tgbot.misc.texts.SAVE:
         comment = data.get('comment') or '-'
-    elif message.text == '❌ Пропустити':
+    elif message.text == tgbot.misc.texts.SKIP:
         comment = '-'
     else:
         comment = message.text
@@ -352,11 +313,7 @@ async def process_comment(message: types.Message, state: FSMContext, google_clie
         excel_form=form,
         sheet_id=config.misc.sheet_id
     )
-    await message.answer(
-        'За вашим повідомленням буде забезпечено відповідне реагування нарядами поліції.'
-        '\n\n'
-        'Для того, щоб зареєструвати ще одне звернення, натисніть /start',
-    )
+    await message.answer(tgbot.misc.texts.FINISH_REQUEST)
     await state.finish()
 
 
@@ -365,21 +322,21 @@ def register_submit_form(dp: Dispatcher):
         accept_phone_contact, content_types=types.ContentType.CONTACT,
         state='*'
     )
-    dp.register_message_handler(cancel, text='Скасувати', state='*')
+    dp.register_message_handler(cancel, text=tgbot.misc.texts.CANCEL, state='*')
     # dp.register_message_handler(
     #     accept_phone_text, regexp=r'^(?:\+?38)?(((\(0\d{2}\))|(\d{3}))[ \-\.]?\d{3}[ \-\.]?\d{2,3}[ \-\.]?\d{2,3})$'
     # )
-    dp.register_message_handler(wrong_number)
-    dp.register_message_handler(process_wrong_phone, text='Далі')
+    # dp.register_message_handler(wrong_number)
+    # dp.register_message_handler(process_wrong_phone, text='Далі')
     dp.register_message_handler(cancel, Command('cancel'), state='*')
     dp.register_message_handler(process_full_name, state=Form.FullName)
     dp.register_message_handler(process_address, state=Form.Address)
     dp.register_message_handler(process_geolocation, state=Form.Geolocation, content_types=types.ContentType.LOCATION)
-    dp.register_message_handler(skip_geolocation, text='❌ Пропустити', state=Form.Geolocation)
+    dp.register_message_handler(skip_geolocation, text=tgbot.misc.texts.SKIP, state=Form.Geolocation)
     dp.register_message_handler(no_geolocation, state=Form.Geolocation, content_types=types.ContentType.ANY)
     dp.register_message_handler(process_description, state=Form.Description)
     dp.register_message_handler(process_photo, state=Form.Photo, content_types=types.ContentType.PHOTO)
-    dp.register_message_handler(process_cancel_photo, text='❌ Пропустити', state=Form.Photo)
+    dp.register_message_handler(process_cancel_photo, text=tgbot.misc.texts.SKIP, state=Form.Photo)
     dp.register_message_handler(process_no_photo_text, state=Form.Photo)
     dp.register_message_handler(process_else_no_photo, state=Form.Photo, content_types=types.ContentType.ANY)
     dp.register_message_handler(process_urgent_status, state=Form.UrgentStatus)
