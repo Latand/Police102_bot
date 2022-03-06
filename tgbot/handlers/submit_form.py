@@ -229,14 +229,14 @@ async def process_no_photo_text(message: types.Message, state: FSMContext):
     await message.reply(
         'Коментар/опис події був добавлен.'
         '\n\n'
-        'Потребуєте швидкої медичної допомоги (пожежної або газової служби)',
+        'Потребуєте швидкої медичної допомоги',
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton('✔ Так'),
+                    KeyboardButton('✔ Потребує швидкої медичної допомоги'),
                 ],
                 [
-                    KeyboardButton('❌ Ні'),
+                    KeyboardButton('❌ Не потребує швидкої медичної допомоги'),
                 ]
             ],
             resize_keyboard=True
