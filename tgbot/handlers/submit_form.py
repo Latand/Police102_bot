@@ -14,6 +14,9 @@ from tgbot.misc.states import Form
 
 
 async def accept_phone_contact(message: types.Message, state: FSMContext):
+    if message.contact.user_id != message.from_user.id:
+        await message.reply('Вам необхідно надіслати ваш контакт, а не чужий.')
+        return
     phone_number = message.contact.phone_number
     full_name = f'{message.contact.first_name} {message.contact.last_name}'
     await state.update_data(phone_number=phone_number)
@@ -221,8 +224,30 @@ async def process_description(message: types.Message, state: FSMContext):
     await Form.Photo.set()
 
 
-async def process_else_no_photo(message: types.Message):
-    await message.reply('Надішліть будь ласка фотографію, не документ або натисніть кнопку Пропустити')
+async def process_no_photo_text(message: types.Message, state: FSMContext):
+    await state.update_data(comment=message.text)
+    await message.reply(
+        'Коментар/опис події був добавлен.'
+        '\n\n'
+        'Потребуєте швидкої медичної допомоги (пожежної або газової служби)',
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton('✔ Так'),
+                ],
+                [
+                    KeyboardButton('❌ Ні'),
+                ]
+            ],
+            resize_keyboard=True
+        )
+    )
+    await Form.UrgentStatus.set()
+
+
+async def process_else_no_photo(message: types.Message, state: FSMContext):
+    await state.update_data(comment=message.text, photo='-')
+    await message.reply('⚠️ Надішліть будь ласка фотографію, <u>не документ</u> або натисніть кнопку Пропустити')
 
 
 async def process_cancel_photo(message: types.Message, state: FSMContext):
@@ -273,13 +298,27 @@ async def process_photo(message: types.Message, state: FSMContext, file_uploader
 async def process_urgent_status(message: types.Message, state: FSMContext, google_client, config):
     urgent_status = message.text
     await state.update_data(urgent_status=urgent_status)
+    data = await state.get_data()
+    comment = data.get('comment')
+    buttons = [
+        [
+            KeyboardButton('❌ Пропустити')
+        ]
+    ]
+    text = 'Бажаєте добавити коментар/опис події? Введіть в наступному повідомленні або натисніть Пропустити.\n\n'
+
+    if comment:
+        buttons.append(
+            [
+                KeyboardButton('✅ Зберегти')
+            ]
+        )
+        text += f'Ваш коментар: {hbold(comment)}. '
 
     await message.reply(
-        'Бажаєте добавити коментар/опис події? Введіть в наступному повідомленні або натисніть Пропустити',
+        text,
         reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[
-                KeyboardButton('❌ Пропустити')
-            ]],
+            keyboard=buttons,
             resize_keyboard=True
         )
     )
@@ -287,10 +326,16 @@ async def process_urgent_status(message: types.Message, state: FSMContext, googl
 
 
 async def process_comment(message: types.Message, state: FSMContext, google_client, config):
-    s_message = await message.reply('Реєструю ...', reply_markup=ReplyKeyboardRemove())
-    comment = message.text if message.text != '❌ Пропустити' else '-'
-
+    await message.reply('Реєструю ...', reply_markup=ReplyKeyboardRemove())
     data = await state.get_data()
+
+    if message.text == '✅ Зберегти':
+        comment = data.get('comment') or '-'
+    elif message.text == '❌ Пропустити':
+        comment = '-'
+    else:
+        comment = message.text
+
     form = ExcelForm(
         phone_number=data.get('phone_number'),
         full_name=data.get('full_name'),
@@ -321,9 +366,9 @@ def register_submit_form(dp: Dispatcher):
         state='*'
     )
     dp.register_message_handler(cancel, text='Скасувати', state='*')
-    dp.register_message_handler(
-        accept_phone_text, regexp=r'^(?:\+?38)?(((\(0\d{2}\))|(\d{3}))[ \-\.]?\d{3}[ \-\.]?\d{2,3}[ \-\.]?\d{2,3})$'
-    )
+    # dp.register_message_handler(
+    #     accept_phone_text, regexp=r'^(?:\+?38)?(((\(0\d{2}\))|(\d{3}))[ \-\.]?\d{3}[ \-\.]?\d{2,3}[ \-\.]?\d{2,3})$'
+    # )
     dp.register_message_handler(wrong_number)
     dp.register_message_handler(process_wrong_phone, text='Далі')
     dp.register_message_handler(cancel, Command('cancel'), state='*')
@@ -335,6 +380,7 @@ def register_submit_form(dp: Dispatcher):
     dp.register_message_handler(process_description, state=Form.Description)
     dp.register_message_handler(process_photo, state=Form.Photo, content_types=types.ContentType.PHOTO)
     dp.register_message_handler(process_cancel_photo, text='❌ Пропустити', state=Form.Photo)
+    dp.register_message_handler(process_no_photo_text, state=Form.Photo)
     dp.register_message_handler(process_else_no_photo, state=Form.Photo, content_types=types.ContentType.ANY)
     dp.register_message_handler(process_urgent_status, state=Form.UrgentStatus)
     dp.register_message_handler(process_comment, state=Form.Comment)

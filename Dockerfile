@@ -1,4 +1,4 @@
-FROM python:3.9-buster
+FROM python:3.9-slim-buster
 ENV BOT_NAME=$BOT_NAME
 
 WORKDIR /usr/src/app/"${BOT_NAME:-tg_bot}"
