@@ -15,10 +15,10 @@
    6. Взять Данные для доступа к АПИ - [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials).
        1. Создать Service Account - "Ввести данные"
        2. Зайти в аккаунт и создать ключ - "скачать JSON"
-2. Создайте файл в Google Sheets, сохраните его ID:
+2. Закиньте файл `config.json` в папку `tgbot`.
+3. Создайте файл в Google Sheets, сохраните его ID:
    1. Скопируйте ссылку на файл: `https://docs.google.com/spreadsheets/d/1xOuB3TMfLluUOsZssvJ-eiy-ymvmAzTked5qMVmUSWc/edit#gid=0`.
    2. В ней между `/d/` и `/edit` содержится текст - это и есть ID: `1xOuB3TMfLluUOsZssvJ-eiy-ymvmAzTked5qMVmUSWc`. Запомните его.
-3. Закиньте файл `config.json` в папку `tgbot`.
 4. Придумайте пароль для Redis, какой-то длинный и сложный.
 5. Получите токен для своего бота в [@Botfather](https://t.me/botfather).
 6. Получите ID своего аккаунта (для айди админа) в боте [@ShowJsonBot](https://t.me/ShowJsonBot).
