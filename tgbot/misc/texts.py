@@ -1,3 +1,5 @@
+from copy import copy
+
 from aiogram.utils.markdown import hcode, hbold, hitalic, hunderline
 
 SELECTED_REGION = 'Львівської області'
@@ -82,7 +84,7 @@ DESCRIPTION_INSTRUCTION = (
 LOCATION_REGISTERED = 'Геолокацію зареєстровано.'
 DESCRIPTION_REGISTERED = 'Опис події: {description} зареєстровано.' + DOUBLE_NEW_LINE
 
-PHOTO_INSTRUCTION = 'Прикріпіть фото, або натисніть кнопку ' + hbold("Пропустити"),
+PHOTO_INSTRUCTION = 'Прикріпіть фото, або натисніть кнопку ' + hbold("Пропустити")
 DESCRIPTION_REGISTERED_2 = 'Коментар/опис події був добавлен.'
 NEED_HELP_INSTRUCTION = 'Потребуєте швидкої медичної допомоги'
 YES_HELP = '✔ Потребує швидкої медичної допомоги'
