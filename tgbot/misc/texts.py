@@ -1,5 +1,3 @@
-from copy import copy
-
 from aiogram.utils.markdown import hcode, hbold, hitalic, hunderline
 
 SELECTED_REGION = 'Львівської області'
