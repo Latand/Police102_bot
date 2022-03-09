@@ -183,10 +183,10 @@ async def process_description(message: types.Message, state: FSMContext):
     await Form.Photo.set()
 
 
-async def process_no_photo_text(message: types.Message, state: FSMContext):
-    await state.update_data(comment=message.text)
+async def move_to_urgent_status(message, state, text_registered, **data_to_save):
+    await state.update_data(**data_to_save)
     await message.reply(
-        tgbot.misc.texts.DESCRIPTION_REGISTERED_2 +
+        text_registered +
         '\n\n' +
         tgbot.misc.texts.NEED_HELP_INSTRUCTION,
         reply_markup=ReplyKeyboardMarkup(
@@ -202,6 +202,14 @@ async def process_no_photo_text(message: types.Message, state: FSMContext):
         )
     )
     await Form.UrgentStatus.set()
+
+
+async def process_no_photo_text(message: types.Message, state: FSMContext):
+    await move_to_urgent_status(message, state, tgbot.misc.texts.DESCRIPTION_REGISTERED_2, comment=message.text)
+
+
+async def process_cancel_photo(message: types.Message, state: FSMContext):
+    await move_to_urgent_status(message, state, tgbot.misc.texts.SKIPPED_PHOTO, photo='-')
 
 
 async def process_else_no_photo(message: types.Message, state: FSMContext):
@@ -209,51 +217,11 @@ async def process_else_no_photo(message: types.Message, state: FSMContext):
     await message.reply(tgbot.misc.texts.PHOTO_NO_DOCUMENT_ERROR)
 
 
-async def process_cancel_photo(message: types.Message, state: FSMContext):
-    await state.update_data(photo='-')
-
-    await message.reply(
-        tgbot.misc.texts.SKIPPED_PHOTO +
-        '\n\n' +
-        tgbot.misc.texts.NEED_HELP_INSTRUCTION,
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(tgbot.misc.texts.YES_HELP),
-                ],
-                [
-                    KeyboardButton(tgbot.misc.texts.NO_HELP),
-                ]
-            ],
-            resize_keyboard=True
-        )
-    )
-    await Form.UrgentStatus.set()
-
-
 async def process_photo(message: types.Message, state: FSMContext, file_uploader: FileUploader):
     photo = message.photo[-1]
     await message.bot.send_chat_action(message.chat.id, 'upload_photo')
     uploaded_photo = await file_uploader.upload_photo(photo)
-    await state.update_data(photo=uploaded_photo.link)
-
-    await message.reply(
-        tgbot.misc.texts.PHOTO_REGISTERED +
-        '\n\n' +
-        tgbot.misc.texts.NEED_HELP_INSTRUCTION,
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(tgbot.misc.texts.YES_HELP),
-                ],
-                [
-                    KeyboardButton(tgbot.misc.texts.NO_HELP),
-                ]
-            ],
-            resize_keyboard=True
-        )
-    )
-    await Form.UrgentStatus.set()
+    await move_to_urgent_status(message, state, tgbot.misc.texts.PHOTO_REGISTERED, photo=uploaded_photo.link)
 
 
 async def process_urgent_status(message: types.Message, state: FSMContext, google_client, config):
