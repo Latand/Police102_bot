@@ -7,7 +7,9 @@
 
 Пример файла, [который заполняется тут.](https://docs.google.com/spreadsheets/d/1jVzM1VdnJ6s_3uT_YwG_0F2KQfZeba8c5mkEaz7CtJk/)
 
-
+## Пример работы
+![img.png](github/img1.png)
+![img_1.png](github/img_1.png)
 
 ## Установка
 1. Раздобудьте файл `config.json`:
